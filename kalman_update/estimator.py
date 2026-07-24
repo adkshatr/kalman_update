@@ -3,7 +3,7 @@ import threading
 from rclpy.node import Node
 import math
 
-from px4_msgs.msg import VehicleOdometry, TimesyncStatus, SensorCombined, VehicleAttitude
+from px4_msgs.msg import VehicleOdometry, TimesyncStatus, SensorCombined, VehicleAttitude, VehicleCommand
 from geometry_msgs.msg import PoseStamped
 
 from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy, DurabilityPolicy
@@ -23,6 +23,7 @@ class Imu_odo(Node):
         #self.create_subscription(VehicleAttitude,"/fmu/out/vehicle_attitude",self.quat_update,qos_profile)
         self.create_subscription(VehicleOdometry,"/fmu/in/vehicle_mocap_odometry",self.mocap_update,qos_profile)
         self.odometry_pub = self.create_publisher(VehicleOdometry,"/fmu/in/vehicle_visual_odometry",10)
+        self.vehicle_command_pub = self.create_publisher(VehicleCommand,'/fmu/in/vehicle_command',qos_profile)
 
         print('subscriber line done')
 
@@ -360,6 +361,34 @@ class Imu_odo(Node):
         return np.array([[0.0,-v[2],v[1]],
                          [v[2],0.0,-v[0]],
                          [-v[1],v[0],0.0]])
+
+
+    def publish_vehicle_command(
+            self,
+            command,
+            param1=0.0,
+            param2=0.0
+    
+        ):
+    
+            msg = VehicleCommand()
+    
+            msg.timestamp = self.timestamp
+    
+            msg.param1 = param1
+            msg.param2 = param2
+    
+            msg.command = command
+    
+            msg.target_system = 1
+            msg.target_component = 1
+    
+            msg.source_system = 1
+            msg.source_component = 1
+    
+            msg.from_external = True
+    
+            self.vehicle_command_pub.publish(msg)
 
 
 def main():
